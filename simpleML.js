@@ -91,18 +91,28 @@ class simpleML {
             console.error(`${layer} not found`);
         }
     }
-
-    runBatchLayer(layer, inputs){
+//Batch methods
+    runBatch_Layer(layer, inputs){
         const outputs = [];
         inputs.forEach(x => {
             outputs.push(this.runLayer(layer, x));
         });
         return outputs;
     }
+    runBatch_Relu = x => x.map(y => this.relu(y));
+    runBatch_Sigmoid = (x , prec = 4) => x.map(y => this.sigmoid(y, prec));
+    runBatch_SoftMax =(x , prec = 4) => x.map(y => this.softmax(y , prec));
+//activation methods
 
-    ////activation functions
+
     relu = x => x.map(y => Math.max(0, y)); 
-    sigmoid = x => x.map(y => 1 / (1 + Math.exp(-y)));
+    sigmoid =(x, prec = 4) => x.map(y => parseFloat((1 / (1 + Math.exp(-y))).toFixed(prec)));
+    softmax = (arr, prec = 4) => {
+        const maxLogit = Math.max(...arr);
+        const scores = arr.map(l => Math.exp(l - maxLogit));
+        const denom = scores.reduce((a, b) => a + b);
+        return scores.map(s => parseFloat((s / denom).toFixed(prec)));
+    }
 
 }
 
