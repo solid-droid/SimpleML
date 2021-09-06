@@ -1,17 +1,29 @@
 
 let network = new simpleML();
 
-network.createLayer('layer0', 4, 3);
-network.createLayer('layer1', 3, 3);
-
 
 input = [[1 , 2, 3, 2.5],
          [0.5 , -1.1, 3.3, -4.5],
          [-2.2 , 4, -4.6, 5.5],]
 
-output = network.runBatch_Layer('layer0', input);
-output = network.runBatch_Relu(output);
-output = network.runBatch_Layer('layer1', output);
-output = network.runBatch_SoftMax(output);
+target = [1, 2 , 2];
 
-console.log(output);
+network.createLayer('layer0', 4, 3 ,
+// {weights: 0.7}
+);
+network.createLayer('layer1', 3, 3, 
+// {weights: 0.5}
+);
+
+output = network.feedForward(input, ['layer0', 'relu', 'layer1', 'softmax'] );
+
+acc    = network.runBatch_accuracy(output, target);
+loss   = network.runBatch_loss(output, target);
+
+console.log(acc, loss);
+
+
+
+
+
+
