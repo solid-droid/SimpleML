@@ -29,7 +29,7 @@ class simpleML {
             }
 
             dot = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
-            execute(inputs){
+            forward(inputs){
                 if(!this.error && inputs.length == this.inputCount){
                     const output = this.dot(this.weights, inputs)+this.bias;
                     return parseFloat(output.toFixed(3));
@@ -38,6 +38,7 @@ class simpleML {
                     console.error('shape mismatch of inputs and weights')
                 }
             }
+
             getWeights = () => this.weights;
             setWeights = weights => this.weights = weights;
         }
@@ -83,7 +84,7 @@ class simpleML {
         if(this.layers[layer]){
             this.layers[layer].forEach((item , i) => {
                 if(item.type == 'neuron'){
-                    this.layers[layer][i].output = item.neuron.execute(inputs);
+                    this.layers[layer][i].output = item.neuron.forward(inputs);
                     outputs.push(this.layers[layer][i].output);
                 }
             });;
@@ -134,9 +135,9 @@ class simpleML {
 //////////////////////////////////////////////////////////////////////////////////////////
     mean = arr => arr.reduce( ( p, c ) => p + c, 0 ) / arr.length;
 
-    runBatch_accuracy = (inputs, target) => {
+    runBatch_accuracy = (inputs, target, prec = 4) => {
         target = Array.isArray(target[0]) ? target.map(x => x.indexOf(1)) : target;
-        return this.mean(target.map((node, index) => inputs[index][node]));
+        return parseFloat((this.mean(target.map((node, index) => inputs[index][node]))).toFixed(prec));
     }
 
 

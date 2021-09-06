@@ -8,12 +8,8 @@ input = [[1 , 2, 3, 2.5],
 
 target = [1, 2 , 2];
 
-network.createLayer('layer0', 4, 3 ,
-// {weights: 0.7}
-);
-network.createLayer('layer1', 3, 3, 
-// {weights: 0.5}
-);
+network.createLayer('layer0', 4, 3);
+network.createLayer('layer1', 3, 3);
 
 output = network.feedForward(input, ['layer0', 'relu', 'layer1', 'softmax'] );
 
