@@ -2,15 +2,19 @@
 
 class simpleML {
 
-    neurons = [];
     layers = {};
-    classNeuron;
+    network;
+    Neuron;
 
     constructor(){
-        this.initNeuron();
+        this.enableNeuron();
     }
-    initNeuron(){
-        this.classNeuron = class {
+
+    mean = arr => arr.reduce( ( p, c ) => p + c, 0 ) / arr.length;
+    clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+    enableNeuron(){
+        this.Neuron = class {
             inputCount;
             name;
             weights = [];
@@ -28,11 +32,11 @@ class simpleML {
                 this.bias = bias;
             }
 
-            dot = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
+            dot = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);  
             forward(inputs){
                 if(!this.error && inputs.length == this.inputCount){
                     const output = this.dot(this.weights, inputs)+this.bias;
-                    return parseFloat(output.toFixed(3));
+                    return parseFloat(output.toFixed(4));
 
                 } else {
                     console.error('shape mismatch of inputs and weights')
@@ -44,15 +48,13 @@ class simpleML {
         }
     }
 
-    createNeuron(name , {inputs = 1, layer='layer0', weights = parseFloat((Math.random()+0.1).toFixed(3)), bias = 1}, skip = false){
-        if(typeof weights == 'number'){
-            weights = Array.from({length: inputs}, () => weights);
-        }
-        const neuron = new this.classNeuron(name, inputs, weights, bias);
-        this.neurons.push({name, layer, inputs, neuron } );
+    createNeuron(name , {inputs = 1, layer='layer0', weights = this.getRandom() , bias = 1}, skip = false){
+        weights = this.checkWeights(weights, inputs);
+        const neuron = new this.Neuron(name, inputs, weights, bias);
         this.buildLayer(layer, skip);
+
         if(this.layers[layer]){
-            this.layers[layer].push({type:'neuron', neuron , output: null});
+            this.layers[layer].push({neuron});
         }
     }
 
@@ -77,30 +79,22 @@ class simpleML {
         }
     }
 
-    getNetwork = () => this.layers;
+    getNetwork = _ => this.layers;
+    connect = network => this.network = network;
+
+    getRandom = _ => parseFloat((Math.random()+0.1).toFixed(3));
+
+    checkWeights = ( weights, lengthArr ) => typeof weights == 'number' ? Array.from({length: lengthArr}, () => weights) : weights;
 
     runLayer(layer, inputs){
-        const outputs = [];
         if(this.layers[layer]){
-            this.layers[layer].forEach((item , i) => {
-                if(item.type == 'neuron'){
-                    this.layers[layer][i].output = item.neuron.forward(inputs);
-                    outputs.push(this.layers[layer][i].output);
-                }
-            });;
-            return outputs;
+            return this.layers[layer].map( item => item.neuron.forward(inputs))
         } else {
             console.error(`${layer} not found`);
         }
     }
 //Batch methods
-    runBatch_Layer(layer, inputs){
-        const outputs = [];
-        inputs.forEach(x => {
-            outputs.push(this.runLayer(layer, x));
-        });
-        return outputs;
-    }
+    runBatch_Layer = (layer, inputs) =>  inputs.map(x => this.runLayer(layer, x));
     runBatch_Relu = x => x.map(y => this.relu(y));
     runBatch_Sigmoid = (x , prec = 4) => x.map(y => this.sigmoid(y, prec));
     runBatch_SoftMax = (x , prec = 4) => x.map(y => this.softmax(y , prec));
@@ -108,8 +102,10 @@ class simpleML {
         target = Array.isArray(target[0]) ? target.map(x => x.indexOf(1)) : target;
         return input.map((y,i)=> lossFunc(y[target[i]], target[i] , prec))
     }
-
-
+    runBatch_accuracy = (inputs, target, prec = 4) => {
+        target = Array.isArray(target[0]) ? target.map(x => x.indexOf(1)) : target;
+        return parseFloat((this.mean(target.map((node, index) => inputs[index][node]))).toFixed(prec));
+    }
 
 //activation methods
 
@@ -124,7 +120,7 @@ class simpleML {
     }
 
 //loss methods
-    clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
     //catagorical loss entropy
     loss = (input, target , prec = 4) =>{
         if(!input && input!==0){
@@ -133,15 +129,6 @@ class simpleML {
         return parseFloat((-Math.log(this.clamp(input,1e-7,1-1e-7)) * target).toFixed(prec));
     } 
 //////////////////////////////////////////////////////////////////////////////////////////
-    mean = arr => arr.reduce( ( p, c ) => p + c, 0 ) / arr.length;
-
-    runBatch_accuracy = (inputs, target, prec = 4) => {
-        target = Array.isArray(target[0]) ? target.map(x => x.indexOf(1)) : target;
-        return parseFloat((this.mean(target.map((node, index) => inputs[index][node]))).toFixed(prec));
-    }
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
 // derivative methods
     derv_sigmoid =(x , prec = 4) => parseFloat((x * (1- x)).toFixed(prec));
     derv_relu = x => x > 0 ? 1 : 0;
@@ -154,7 +141,7 @@ class simpleML {
     'softmax': this.runBatch_SoftMax
   };
 
-    feedForward(input, network){
+    feedForward(input, network= this.network){
         let output = input;
         network.forEach(stage => {
             output = ['sigmoid','relu','softmax'].includes(stage) ?
@@ -163,6 +150,9 @@ class simpleML {
         return output;
    }
 
+    train(input, target , network = this.network){
+
+    }
 
 }
 
