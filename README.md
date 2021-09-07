@@ -1,11 +1,11 @@
 # SimpleML
- Machine Learning made Simple
+ Machine Learning made Simple  
+ Wrapper for [DannJS](https://dannjs.org/) deep learning library
  
 # Goals  
-* Easy to use.
-* Full control on each level
-* Retrain custom models with new data-set
-* Distributed ML
+* Easy to generate networks.
+* Custom weights and biases.
+* Distributed ML.
 
 # How To Use
 HTML
@@ -14,19 +14,23 @@ HTML
 ```
 Javascript
 ```Javascript
-let network = new simpleML();
-input = [[1 , 2, 3, 2.5],
-         [0.5 , -1.1, 3.3, -4.5],
-         [-2.2 , 4, -4.6, 5.5],]
 
-target = [1, 2 , 2];
+const engine = new simpleML(); //create simpleML engine
 
-network.createLayer('layer0', 4, 3);
-network.createLayer('layer1', 3, 3);
+input = [1 , 2, 3, 2.5];
 
-output = network.feedForward(input, ['layer0', 'relu', 'layer1', 'softmax'] );
+engine.createLayer('inputs', 4); 
+// length of inputs
 
-acc    = network.runBatch_accuracy(output, target);
-loss   = network.runBatch_loss(output, target);
+engine.createLayer('layer1', 3); 
+// layer name: 'layer 1' , number of neurons: 3
+
+engine.createLayer('layer2', 3);
+
+engine.createNetwork('network1', ['inputs', 'layer0', 'relu', 'layer1', 'softmax'] ); 
+// create a network
+
+const output = engine.predict(inputs, 'network1'); 
+// predict over the network
 
 ```
