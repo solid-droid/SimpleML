@@ -2,6 +2,8 @@
  Machine Learning made Simple  
  Wrapper for [DannJS](https://dannjs.org/) deep learning library
  
+ Create -> Train -> Predict
+ 
 # Goals  
 * Easy to generate networks.
 * Custom weights and biases.
