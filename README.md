@@ -34,6 +34,7 @@ engine.createNetwork('network1',{
 engine.train('network1', data , { 
     lr       : 0.0001,
     loss     : 'bce',
+    loggrt   : logg => console.log(logg)
 }); 
 
 //predict the output
