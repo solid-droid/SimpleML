@@ -15,22 +15,26 @@ HTML
 Javascript
 ```Javascript
 
-const engine = new simpleML(); //create simpleML engine
+//create simpleML engine
+const engine = new simpleML(); 
 
-input = [1 , 2, 3, 2.5];
+//create a model network => 'network1'
+engine.createNetwork('network1',{
+    input    : 3, //input neurons
+    hidden   : [[4, 'reLU'], [4, 'reLU']], //[neurons , layer activation]
+    output   : 2, //outputs
+    activate : 'sigmoid', // output activation
+}); 
 
-engine.createLayer('inputs', 4); 
-// length of inputs
+//data = [{input : [1 , 2, 3] , output: [1 , 0] } , ...]
 
-engine.createLayer('layer1', 3); 
-// layer name: 'layer 1' , number of neurons: 3
+//train 'network1'
+engine.train('network1', data , { 
+    lr       : 0.0001,
+    loss     : 'bce',
+}); 
 
-engine.createLayer('layer2', 3);
-
-engine.createNetwork('network1', ['inputs', 'layer0', 'relu', 'layer1', 'softmax'] ); 
-// create a network
-
-const output = engine.predict(inputs, 'network1'); 
-// predict over the network
+//predict the output
+output = engine.predict('network1',[-5]);
 
 ```
