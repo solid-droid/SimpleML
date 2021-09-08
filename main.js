@@ -1,20 +1,32 @@
 
 
-const nn = new simpleML.Network(2, 2);
+const nn = new simpleML();
 
-nn.log({details:true});
-// network.createLayer('layer0', 4, 3); //name , inputs, neurons
-// network.createLayer('layer1', 3, 3);
-// network.connect(['layer0', 'relu', 'layer1', 'softmax']);
 
-// output = network.feedForward(input );
+var engine = new simpleML(); //create simpleML engine
 
-// network.train(input, target);
+const data = [...Array(10000).keys()].map(x => {
+ const input =  parseInt(String(Math.random() * 50 - 25),10);
+  return  {input : [input]  , output : [input > 0 ? true : false]}
+});
 
-// acc    = network.runBatch_accuracy(output, target);
-// loss   = network.runBatch_loss(output, target);
+engine.createNetwork('network1',{
+    input    : 1,
+    hidden   : [[2, 'reLU']],
+    output   : 1,
+    activate : 'sigmoid',
+}); 
 
-// console.log(acc);
+engine.train('network1', data , { 
+    lr       : 0.0001,
+    loss     : 'bce',
+}); 
+
+output = engine.predict('network1',[-5]);
+
+console.log(output);
+
+
 
 
 

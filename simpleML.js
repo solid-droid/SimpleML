@@ -1,8 +1,42 @@
 
-
+isBrowser = false;
 class simpleML {
 
+
+    networks = {}
+    constructor(){}
+
+    createNetwork(name , {input = 0 , hidden = [], output = 0, activate = 'sigmoid' , weights = false}){
+      const network = this.generateNN(input, hidden, output , activate, weights);
+      this.networks[name] = {lr: 0.001, loss: 'bse' ,network}
+      return network;
+    }
     
+    generateNN(inputs, hidden, output , activate, weights){
+     const network = new simpleML.Network(inputs, output);
+     hidden.forEach(([nodes, activation]) => network.addHiddenLayer(nodes , activation));
+     network.outputActivation(activate);
+      if(!weights){
+        network.makeWeights();
+      }
+      return network;
+    }
+
+    train(network,data,{lr=0.0001, loss='bce', logger }={}){
+      this.networks[network].network.lr = lr;
+      this.networks[network].network.setLossFunction(loss);
+      data.forEach(x => {
+        this.networks[network].network.backpropagate(x.input, x.output);
+        if(logger){
+          logger(this.networks[network].network.loss);
+        }
+      })
+
+    };
+
+    predict(network, input){
+     return this.networks[network].network.feedForward(input, {decimals : 3});
+    }
 }
 
   //////////////////////////////////
@@ -107,14 +141,14 @@ static sigmoid(x) {
     return 1 / (1 + Math.exp(-x));
   }
 static   sigmoid_d(x) {
-    let x1 = sigmoid(x);
+    let x1 = simpleML.Methods.sigmoid(x);
     return x1 * (1 - x1);
   }
 static   leakySigmoid(x) {
     return 1 / (1 + Math.exp(-x)) + x / 100;
   }
 static leakySigmoid_d(x) {
-   let x1 = leakySigmoid(x);
+   let x1 = simpleML.Methods.leakySigmoid(x);
     return x1 * (1 - x1);
   }
 static   siLU(x) {
@@ -131,7 +165,7 @@ static   tanH(x) {
     return top / down;
   }
 static   tanH_d(x) {
-    return 1 - Math.pow(tanH(x), 2);
+    return 1 - Math.pow(simpleML.Methods.tanH(x), 2);
   }
   static   leakyReLUCapped(x) {
     if (x >= 0 && x <= 6) {
@@ -214,7 +248,7 @@ static   tanH_d(x) {
     return Math.log(1 + Math.exp(x));
   }
   static softplus_d(x) {
-    return sigmoid(x);
+    return simpleML.Methods.sigmoid(x);
   }
   
 
@@ -385,8 +419,8 @@ simpleML.Logger = class Logger {
           console.warn('DannWarning: ' + warning);
           console.warn('> ' + method);
         } else {
-          console.warn('\x1b[33m' + 'DannWarning: ' + warning + '\x1b[0m');
-          console.warn('\x1b[33m' + '> ' + method + '\x1b[0m');
+          console.warn(warning);
+          console.warn(method);
         }
         console.trace();
       };
@@ -456,7 +490,7 @@ simpleML.Matrix = class Matrix {
     }
 
 
-    static add(n) {
+    add(n) {
         if (n instanceof Matrix) {
           if (this.rows !== n.rows || this.cols !== n.cols) {
              simpleML.Logger.error('Matrix dimensions should match', 'Matrix.prototype.add');
@@ -479,7 +513,7 @@ simpleML.Matrix = class Matrix {
         }
       };
 
-      add(a, b) {
+    static add(a, b) {
         let ans = new simpleML.Matrix(a.rows, a.cols);
         if (a.rows !== b.rows || a.cols !== b.cols) {
            simpleML.Logger.error('Matrix dimensions should match', 'Matrix.add');
@@ -681,7 +715,7 @@ simpleML.Matrix = class Matrix {
         }
       };
 
-     static mult(n) {
+     mult(n) {
         if (n instanceof Matrix) {
           if (this.rows !== n.rows || this.cols !== n.cols) {
              simpleML.Logger.error(
@@ -707,12 +741,11 @@ simpleML.Matrix = class Matrix {
         }
       };
 
-      mult(a, b, options = { mode: 'cpu' }) {
-        if (options !== undefined) {
-          if (options.mode) {
+      static mult(a, b, options = { mode: 'cpu' }) {
+        let mode = '';
+        if (options && options.mode) {
             mode = options.mode;
           }
-        }
         if (mode === 'cpu') {
           let ans = new simpleML.Matrix(a.rows, b.cols);
           if (a instanceof Matrix && b instanceof Matrix) {
@@ -750,7 +783,7 @@ simpleML.Matrix = class Matrix {
         return this;
       };
 
-     static sub(n) {
+     sub(n) {
         if (n instanceof Matrix) {
           if (this.rows !== n.rows || this.cols !== n.cols) {
              simpleML.Logger.error('Matrix dimensions should match', 'Matrix.prototype.sub');
@@ -773,7 +806,7 @@ simpleML.Matrix = class Matrix {
         }
       };
 
-      sub(a, b) {
+    static  sub(a, b) {
         if (a instanceof Matrix && b instanceof Matrix) {
           if (a.rows !== b.rows || a.cols !== b.cols) {
              simpleML.Logger.error('The matrix dimensions should match', 'Matrix.sub');
