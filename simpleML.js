@@ -6,8 +6,8 @@ class simpleML {
     networks = {}
     constructor(){}
 
-    createNetwork(name , {input = 0 , hidden = [], output = 0, activate = 'sigmoid' , weights = false}){
-      const network = this.generateNN(input, hidden, output , activate, weights);
+    createNetwork(name , {input = 0 , hidden = [], output = 0 , weights = false}){
+      const network = this.generateNN(input, hidden, output[0] , output[1] , weights);
       this.networks[name] = {lr: 0.001, loss: 'bse' ,network}
       return network;
     }
@@ -22,20 +22,24 @@ class simpleML {
       return network;
     }
 
-    train(network,data,{lr=0.0001, loss='bce', logger }={}){
+    async train(network,data,{lr=0.0001, loss='bce', getloss , onComplete }={}){
       this.networks[network].network.lr = lr;
       this.networks[network].network.setLossFunction(loss);
       data.forEach(x => {
         this.networks[network].network.backpropagate(x.input, x.output);
-        if(logger){
-          logger(this.networks[network].network.loss);
+        if(getloss){
+          getloss(this.networks[network].network.loss);
         }
-      })
+      });
+      if(onComplete){
+        onComplete();
+      }
 
     };
 
     predict(network, input){
-     return this.networks[network].network.feedForward(input, {decimals : 3});
+      const [output] = this.networks[network].network.feedForward(input);
+     return parseFloat(output.toFixed(4));
     }
 }
 
