@@ -32,7 +32,7 @@ engine.createNetwork('network1',{
 //train 'network1'
 engine.train('network1', data1 , { 
     lr         : 0.01,
-    loss       : 'mce',  //only readly at the moment (not applied to network as hyper param)
+    loss       : 'mce',  //read only at the moment (not applied to network as hyper param)
     optimizer  : 'adam', //not implemented
     epoch      : 1,      //not implemented
     batch      : 1,      //not implemented
