@@ -22,22 +22,32 @@ const engine = new simpleML();
 
 //create a model network => 'network1'
 engine.createNetwork('network1',{
-    input    : 3, //input neurons
-    hidden   : [[4, 'reLU'], [4, 'reLU']], //[neurons , layer activation]
-    output   : 2, //outputs
-    activate : 'sigmoid', // output activation
+    input    : 1,
+    hidden   : [[2, 'reLU'],],
+    output   : [1,'sigmoid']
 }); 
 
 //data = [{input : [1 , 2, 3] , output: [1 , 0] } , ...]
 
 //train 'network1'
-engine.train('network1', data , { 
-    lr       : 0.0001,
-    loss     : 'bce',
-    logger   : logg => console.log(logg)
+engine.train('network1', data1 , { 
+    lr         : 0.01,
+    loss       : 'mce',  //only readly at the moment (not applied to network as hyper param)
+    optimizer  : 'adam', //not implemented
+    epoch      : 1,      //not implemented
+    batch      : 1,      //not implemented
+    getloss    : err => updateChart(err),
+    onComplete : _ =>   predict(),
 }); 
 
 //predict the output
-output = engine.predict('network1',[-5]);
+function predict() {
+    //loss func
+    myChart.update();
+    
+    //prediction
+    output = engine.predict('network1',[-5]);
+    console.log(output);
+}
 
 ```
