@@ -35,35 +35,14 @@ const data1 = [...Array(1000).keys()].map(x => {
    });
 
 //create simpleML engine
-var engine = new simpleML(); 
+var engine = new simpleML2(); 
 
+const NN = engine.createNetwork()
+NN.createLayer(100);    //inputs layer
+NN.createLayer(50);     //hidden layer
 
-//create a model network
-engine.createNetwork('network1',{
-    input    : 1,
-    hidden   : [[2, 'reLU'],],
-    output   : [1,'sigmoid']
-}); 
+console.log(NN);
 
-
-//train it
-engine.train('network1', data1 , { 
-    lr         : 0.01,
-    loss       : 'mce',
-    optimizer  : 'adam',
-    epoch      : 1,
-    batch      : 1,
-    getloss    : err => updateChart(err),
-    onComplete : _ =>   predict(),
-}); 
-
-//predict the output
-
-function predict() {
-    myChart.update();
-    output = engine.predict('network1',[-5]);
-    console.log(output);
-}
 
 
 
