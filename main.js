@@ -22,12 +22,11 @@
 
 const loss = [];
   const updateChart = data => {
-    console.log(data);
     myChart.data.labels.push(String(myChart.data.labels.length));
     myChart.data.datasets[0].data.push(data);
 }
 
-const data1 = [...Array(10).keys()].map(x => {
+const data1 = [...Array(1000).keys()].map(x => {
     const input =  parseInt(String(Math.random() * 100 - 50),10)
      return  {input : [input]  , output : [input > 0 ? true : false]}
    });
@@ -46,26 +45,20 @@ nn.input(1)
   .layer(2, 'reLU')
   .output(1, 'reLU');
 
-const data = [{input:[11], output:[true]}, {input:[-5], output:[false]}];
 
-nn.train(data, {
-  epoch: 50,
-  batch:1,
+nn.train(data1, {
+  epoch: 10,
+  batch: 100,
   learningRate: 0.001,
   loss: 'mse',
   shuffle: true,
   callbacks: {
     onEpochEnd: (epoch, err) => {
-      // loss.push(err[0]);
-      // updateChart(err[0]);
+      updateChart(err[0]);
     }
   }
 });
-
-updateChart(10);
-updateChart(15);
-updateChart(20);
-
+myChart.update();
 
 
 
