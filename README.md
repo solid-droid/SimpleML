@@ -17,37 +17,33 @@ HTML
 Javascript
 ```Javascript
 
-//create simpleML engine
-const engine = new simpleML(); 
+var engine = new simpleML(); 
 
-//create a model network => 'network1'
-engine.createNetwork('network1',{
-    input    : 1,
-    hidden   : [[2, 'reLU'],],
-    output   : [1,'sigmoid']
-}); 
+const nn = engine.createNetwork();
 
-//data = [{input : [1 , 2, 3] , output: [1 , 0] } , ...]
+nn.input(1)
+  .layer(2, 'reLU')
+  .layer(2, 'reLU')
+  .layer(2, 'reLU')
+  .output(1, 'reLU');
 
-//train 'network1'
-engine.train('network1', data1 , { 
-    lr         : 0.01,
-    loss       : 'mce',  //read only at the moment (not applied to network as hyper param)
-    optimizer  : 'adam', //not implemented
-    epoch      : 1,      //not implemented
-    batch      : 1,      //not implemented
-    getloss    : err => updateChart(err),
-    onComplete : _ =>   predict(),
-}); 
+data = [
+ {input:[5] , output:[true]},
+ {input:[-10] , output:[false]},
+ ]
 
-//predict the output
-function predict() {
-    //loss func
-    myChart.update();
-    
-    //prediction
-    output = engine.predict('network1',[-5]);
-    console.log(output);
-}
+nn.train(data, {
+  epoch: 10,
+  batch: 100,
+  learningRate: 0.001,
+  loss: 'mse',
+  shuffle: true,
+  callbacks: {
+    onEpochEnd: (epoch, err) => {
+      console.log(epoch, err);
+    }
+  }
+});
+
 
 ```
