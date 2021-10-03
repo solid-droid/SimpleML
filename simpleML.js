@@ -2,45 +2,12 @@
 isBrowser = false;
 class simpleML {
 
-
-    networks = {}
     constructor(){}
 
-    createNetwork(name , {input = 0 , hidden = [], output = 0 , weights = false}){
-      const network = this.generateNN(input, hidden, output[0] , output[1] , weights);
-      this.networks[name] = {lr: 0.001, loss: 'bse' ,network}
-      return network;
-    }
-    
-    generateNN(inputs, hidden, output , activate, weights){
-     const network = new simpleML.Network(inputs, output);
-     hidden.forEach(([nodes, activation]) => network.addHiddenLayer(nodes , activation));
-     network.outputActivation(activate);
-      if(!weights){
-        network.makeWeights();
-      }
-      return network;
+    createNetwork(inputs , outputs){
+        return new simpleML.Network(inputs, outputs);
     }
 
-    async train(network,data,{lr=0.0001, loss='bce', getloss , onComplete }={}){
-      this.networks[network].network.lr = lr;
-      this.networks[network].network.setLossFunction(loss);
-      data.forEach(x => {
-        this.networks[network].network.backpropagate(x.input, x.output);
-        if(getloss){
-          getloss(this.networks[network].network.loss);
-        }
-      });
-      if(onComplete){
-        onComplete();
-      }
-
-    };
-
-    predict(network, input){
-      const [output] = this.networks[network].network.feedForward(input);
-     return parseFloat(output.toFixed(4));
-    }
 }
 
   //////////////////////////////////
@@ -426,7 +393,6 @@ simpleML.Logger = class Logger {
           console.warn(warning);
           console.warn(method);
         }
-        console.trace();
       };
 
       static error (error, method) {
@@ -1114,15 +1080,10 @@ simpleML.Layer = class Layer  {
 
 simpleML.Network = class Network  {
 
-    constructor (i = 1, o = 1) {
-        
-        this.i = i;
-        this.inputs = new simpleML.Layer('input', i);
-      
-        this.o = o;
-        this.outputs = new simpleML.Layer('output', o, 'sigmoid');
-      
-        this.Layers = [this.inputs, this.outputs];
+    Layers = [];
+    arch = [];
+
+    constructor () {
         this.weights = [];
         this.biases = [];
         this.errors = [];
@@ -1132,10 +1093,6 @@ simpleML.Network = class Network  {
         this.outs = [];
         this.loss = 0;
         this.losses = [];
-        this.lr = 0.001;
-        this.arch = [i, o];
-      
-        this.epoch = 0;
         this.recordLoss = false;
       
         this.lossfunc = lossfuncs['mse'];
@@ -1204,10 +1161,28 @@ simpleML.Network = class Network  {
           }
         }
       };
-      
-    addHiddenLayer(size, act) {
-        if (act !== undefined) {
-          if ( activations[act] === undefined) {
+
+    input(i = 1) {
+        this.i = i;
+        this.arch = [i];
+        this.inputs = new simpleML.Layer('input', i);
+        this.Layers = [this.inputs];
+        return this;
+    }
+
+    output (o = 1, act = 'sigmoid') {
+        this.o = o;
+        if(act){
+            act = this.checkActivation(act);
+        }
+        this.arch.push(o);
+        this.outputs = new simpleML.Layer('output', o, act);
+        this.Layers.push(this.outputs);
+        return this;
+    }
+
+    checkActivation(act) {
+        if ( !activations[act]) {
             if (typeof act === 'string') {
                simpleML.Logger.error(
                 "'" +
@@ -1218,56 +1193,68 @@ simpleML.Network = class Network  {
             }
             act = 'sigmoid';
           }
+          return act;
+    };
+
+    layer(size, act) {
+        if (act) {
+            act = this.checkActivation(act);
         } else {
           act = 'sigmoid';
         }
-        this.arch.splice(this.arch.length - 1, 0, size);
+        this.arch.push(size);
         let layer = new simpleML.Layer('hidden', size, act);
-        this.Layers.splice(this.Layers.length - 1, 0, layer);
+        this.Layers.push(layer);
+        return this;
       };
 
     backpropagate(
-        inputs,
-        target,
+        inputs = [],
+        target = [],
         options = {}
       ) {
-        //optional parameter values:
-        let showLog = options.log || false;
-        let mode = options.mode || 'cpu';
-        let recordLoss = options.saveLoss || false;
-        let table = options.table || false;
         let dropout = options.dropout || undefined;
-      
-        let targets = new simpleML.Matrix(0, 0);
-        if (target.length === this.o) {
-          targets = simpleML.Matrix.fromArray(target);
+        let mode = options.mode || 'cpu';
+
+        if( !options.error) {
+            let targets = new simpleML.Matrix(0, 0);
+            if (target.length === this.o) {
+              targets = simpleML.Matrix.fromArray(target);
+            } else {
+               simpleML.Logger.error(
+                'The target array length does not match the number of ouputs the dannjs model has.',
+                'Dann.prototype.backpropagate'
+              );
+              return;
+            }
+            if (typeof this.lr !== 'number') {
+               simpleML.Logger.error(
+                'The learning rate specified (Dann.lr property) is not a number.',
+                'Dann.prototype.backpropagate'
+              );
+              return;
+            }
+          
+            this.outs = this.feedForward(inputs, { log: false, mode: mode });
+            this.errors[this.errors.length - 1] = simpleML.Matrix.sub(
+              targets,
+              this.Layers[this.Layers.length - 1].layer
+            );  
         } else {
-           simpleML.Logger.error(
-            'The target array length does not match the number of ouputs the dannjs model has.',
-            'Dann.prototype.backpropagate'
-          );
-          return;
+            this.errors[this.errors.length - 1] = simpleML.Matrix.fromArray(options.error);
         }
-        if (typeof this.lr !== 'number') {
-           simpleML.Logger.error(
-            'The learning rate specified (Dann.lr property) is not a number.',
-            'Dann.prototype.backpropagate'
-          );
-          return;
-        }
-      
-        this.outs = this.feedForward(inputs, { log: false, mode: mode });
-        this.errors[this.errors.length - 1] = simpleML.Matrix.sub(
-          targets,
-          this.Layers[this.Layers.length - 1].layer
-        );
+        
+
         this.gradients[this.gradients.length - 1] = simpleML.Matrix.map(
           this.Layers[this.Layers.length - 1].layer,
           this.Layers[this.Layers.length - 1].actfunc_d
         );
+
+
         this.gradients[this.gradients.length - 1].mult(
           this.errors[this.errors.length - 1]
         );
+
         this.gradients[this.gradients.length - 1].mult(this.lr);
       
         if (dropout !== undefined) {
@@ -1320,31 +1307,82 @@ simpleML.Network = class Network  {
       
         this.weights[0].add(weights_deltas);
         this.biases[0].add(this.gradients[0]);
-      
-        this.loss = this.lossfunc(this.outs, target, this.percentile);
-        if (recordLoss === true) {
-          this.losses.push(this.loss);
-        }
-        if (showLog === true) {
-          console.log('Prediction: ');
-          if (table) {
-            console.table(this.outs);
-          } else {
-            console.log(this.outs);
-          }
-          console.log('target: ');
-          if (table) {
-            console.table(target);
-          } else {
-            console.log(target);
-          }
-          console.log('Loss: ', this.loss);
-        }
       };
 
-    train(inputs, target, options) {
-        return this.backpropagate(inputs, target, options);
+    createBatch (array, parts) {
+        let result = [];
+        for (let i = parts; i > 0; i--) {
+            result.push(array.splice(0, Math.ceil(array.length / i)));
+        }
+        return result;
+    }
+
+    train(data , options = {}) {
+        this.epoch = options.epoch || 1;
+        this.batch = options.batch || data.length;
+        this.lr = options.learningRate || 0.001;
+        this.lossfunc = lossfuncs[options.loss] || lossfuncs['mse'];
+        this.shuffle = options.shuffle || false;
+        this.mode = options.mode || 'cpu';
+        this.randomWeights = options.randomWeights || true;
+        if(this.randomWeights) {
+            this.makeWeights(); 
+        };
+        this.onEpochEnd = options?.callbacks?.onEpochEnd || undefined;
+        
+        let epochIndex = 0;
+        let _data = data.map(item => item);
+
+        if (typeof this.lr !== 'number') {
+            simpleML.Logger.error(
+             'The learning rate specified is not a number.'
+           );
+           return;
+         }
+
+        for(; epochIndex < this.epoch; epochIndex++) {
+            if (this.shuffle === true) {
+                _data = _data.sort( () => .5 - Math.random() );
+            }
+            let epochLoss = [];
+            const batches = this.createBatch(_data.map(_ => _), _data.length/this.batch);
+            batches.forEach(batch => {
+                let batchOutput = [];
+                batch.forEach(item => {
+                   const output = this.feedForward(item.input, { log: false, mode: this.mode });
+                   batchOutput.push(output);
+                });
+                const batchLoss = this.getLoss(batchOutput, batch.map(item => item.output), this.lossfunc); 
+                this.backpropagate([], [], {error: batchLoss.map(item => 2 * sqrt(item))});
+                epochLoss = batchLoss;
+            });
+            if(this.onEpochEnd) {
+                this.onEpochEnd(epochIndex, epochLoss);
+            }
+            
+        }
+        // return this.backpropagate(inputs, target, options);
     };
+
+    getLoss(
+        prediction, 
+        target, 
+        func,
+        ) {
+        
+        const nodeOutput = [];
+        const lossArr = [];
+        prediction.forEach((layer, entryIndex) => {
+            layer.forEach((node, nodeIndex) => {
+                nodeOutput[nodeIndex] = nodeOutput[nodeIndex] || [];
+                nodeOutput[nodeIndex][entryIndex] = {prediction : node, target: target[entryIndex][nodeIndex]};
+            });
+        });
+        nodeOutput.forEach(item => {
+            lossArr.push(func( item.map(item => item.target), item.map(item => item.prediction)));
+        });
+        return lossArr;  
+    }
 
     createFromJSON(data) {
         const model = new Dann();
