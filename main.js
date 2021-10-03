@@ -26,44 +26,41 @@ const loss = [];
     myChart.data.datasets[0].data.push(data);
 }
 
-
-////////////////////////////////////////////////////////
-
 const data1 = [...Array(1000).keys()].map(x => {
     const input =  parseInt(String(Math.random() * 100 - 50),10)
      return  {input : [input]  , output : [input > 0 ? true : false]}
    });
 
-//create simpleML engine
+//create simpleML engine ////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
 var engine = new simpleML(); 
 
+const nn = engine.createNetwork();
 
-//create a model network
-engine.createNetwork('network1',{
-    input    : 1,
-    hidden   : [[2, 'reLU'],],
-    output   : [1,'sigmoid']
-}); 
+nn.input(1)
+  .layer(2, 'reLU')
+  .layer(2, 'reLU')
+  .layer(2, 'reLU')
+  .output(1, 'reLU');
 
 
-//train it
-engine.train('network1', data1 , { 
-    lr         : 0.01,
-    loss       : 'mce',
-    optimizer  : 'adam',
-    epoch      : 1,
-    batch      : 1,
-    getloss    : err => updateChart(err),
-    onComplete : _ =>   predict(),
-}); 
+nn.train(data1, {
+  epoch: 10,
+  batch: 100,
+  learningRate: 0.001,
+  loss: 'mse',
+  shuffle: true,
+  callbacks: {
+    onEpochEnd: (epoch, err) => {
+      updateChart(err[0]);
+    }
+  }
+});
+myChart.update();
 
-//predict the output
 
-function predict() {
-    myChart.update();
-    output = engine.predict('network1',[-5]);
-    console.log(output);
-}
 
 
 
