@@ -26,30 +26,39 @@ const loss = [];
     myChart.data.datasets[0].data.push(data);
 }
 
-const data1 = [...Array(1000).keys()].map(x => {
-    const input =  parseInt(String(Math.random() * 100 - 50),10)
-     return  {input : [input]  , output : [input > 0 ? true : false]}
-   });
-
-//create simpleML engine ////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-
 
 var engine = new simpleML(); 
 
 const nn = engine.createNetwork();
 
-nn.input(1)
-  .layer(2, 'reLU')
-  .layer(2, 'reLU')
-  .layer(2, 'reLU')
-  .output(1, 'reLU');
+nn.input(2)
+  .layer(1, 'reLu')
+  .layer(1, 'sigmoid')
+  .layer(1, 'reLu')
+  .output(1, 'sigmoid');
 
+data = [{
+  input: [0, 0],
+  output: [0]
+},
+{
+  input: [0, 1],
+  output: [1]
+},
+{
+  input: [1, 0],
+  output: [1]
+},
+{
+  input: [1, 1],
+  output: [0]
+}
+];
 
-nn.train(data1, {
-  epoch: 10,
-  batch: 100,
-  learningRate: 0.001,
+nn.train(data, {
+  epoch: 100,
+  batch: 4,
+  learningRate: 0.05,
   loss: 'mse',
   shuffle: true,
   callbacks: {
