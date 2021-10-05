@@ -5,9 +5,9 @@
  Create -> Train -> Predict
  
 # Goals  
-* Easy to generate networks.
-* Custom weights and biases.
-* Distributed ML.
+* simplify tensorflow js
+* Distributed ML over webRTC.
+* Easy to use
 
 # How To Use
 HTML
