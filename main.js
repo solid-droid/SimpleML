@@ -41,5 +41,5 @@ const predict = () => {
     round: true
   });
 
-  console.log(res)
+  console.log(res);
 };
