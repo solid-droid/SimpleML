@@ -67,9 +67,16 @@ class simpleML {
     predict(input , options = {}) {
         const prec = options.precision || 3;
         const round = options.round || false;
-       const result = this.model.predict(tf.tensor2d(input))
-                                .dataSync()
+        let result;
+        tf.tidy(() => {
+        result = this.model.predict(tf.tensor2d(input))
+                            .dataSync()
+        });
         return Array.from(result).map(item => round ? Math.round(item) : parseFloat(item.toFixed(prec)));
+    }
+
+    tensors(){
+        return tf.memory().numTensors;
     }
   
 }
