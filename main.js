@@ -20,3 +20,26 @@
   );
 
   ////////////////////////////////////////////////////////////////
+
+const nn = new simpleML();
+
+nn.input(2)
+  .layer(2, 'sigmoid')
+  .layer(1, 'sigmoid')
+
+nn.train(xor, {
+  epochs: 1500,
+  learningRate: 0.01,
+  optimizer: 'adam',
+  onEpochEnd : (epoch, logs) => console.log(epoch, logs),
+  onTrainEnd : () => predict()
+});
+
+const predict = () => {
+  const res = nn.predict([[0,0],[1,1],[0,1],[1,0]], {
+    precision: 3,
+    round: true
+  });
+
+  console.log(res)
+};
