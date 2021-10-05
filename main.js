@@ -1,5 +1,4 @@
-
-
+///////////////////////--chart--/////////////////////////////
   const config = {
     type: 'line',
     data: {
@@ -20,51 +19,27 @@
     config
   );
 
-const loss = [];
-  const updateChart = data => {
-    myChart.data.labels.push(String(myChart.data.labels.length));
-    myChart.data.datasets[0].data.push(data);
-}
+  ////////////////////////////////////////////////////////////////
 
-const data1 = [...Array(1000).keys()].map(x => {
-    const input =  parseInt(String(Math.random() * 100 - 50),10)
-     return  {input : [input]  , output : [input > 0 ? true : false]}
-   });
+const nn = new simpleML();
 
-//create simpleML engine ////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
+nn.input(2)
+  .layer(2, 'sigmoid')
+  .layer(1, 'sigmoid')
 
-
-var engine = new simpleML(); 
-
-const nn = engine.createNetwork();
-
-nn.input(1)
-  .layer(2, 'reLU')
-  .layer(2, 'reLU')
-  .layer(2, 'reLU')
-  .output(1, 'reLU');
-
-
-nn.train(data1, {
-  epoch: 10,
-  batch: 100,
-  learningRate: 0.001,
-  loss: 'mse',
-  shuffle: true,
-  callbacks: {
-    onEpochEnd: (epoch, err) => {
-      updateChart(err[0]);
-    }
-  }
+nn.train(xor, {
+  epochs: 1500,
+  learningRate: 0.01,
+  optimizer: 'adam',
+  onEpochEnd : (epoch, logs) => console.log(epoch, logs),
+  onTrainEnd : () => predict()
 });
-myChart.update();
 
+const predict = () => {
+  const res = nn.predict([[0,0],[1,1],[0,1],[1,0]], {
+    precision: 3,
+    round: true
+  });
 
-
-
-
-
-
-
-
+  console.log(res)
+};

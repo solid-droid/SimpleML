@@ -1,49 +1,57 @@
 # SimpleML
  Machine Learning made Simple  
- Wrapper for [DannJS](https://dannjs.org/) deep learning library
+ Wrapper for [tensorflowjs](https://www.tensorflow.org/js)
  
  Create -> Train -> Predict
  
 # Goals  
-* Easy to generate networks.
-* Custom weights and biases.
-* Distributed ML.
+* simplify tensorflow js
+* Distributed ML over webRTC.
+* Easy to use
 
 # How To Use
 HTML
 ```html
-<script src="simpleML.js"></script>
+<script src="./ts.min.js"></script>
+<script src="./simpleML.js"></script>
 ```
 Javascript
 ```Javascript
 
-var engine = new simpleML(); 
+const nn = new simpleML();
 
-const nn = engine.createNetwork();
+//create network
+nn.input(2)
+  .layer(2, 'sigmoid')
+  .layer(1, 'sigmoid')
 
-nn.input(1)
-  .layer(2, 'reLU')
-  .layer(2, 'reLU')
-  .layer(2, 'reLU')
-  .output(1, 'reLU');
+//dataset
+const xor = [
+    { input:[0,0], output:[0]  },
+    { input:[0,1], output:[1]  },
+    { input:[1,0], output:[1]  },
+    { input:[1,1], output:[0]  },  
+]
 
-data = [
- {input:[5] , output:[true]},
- {input:[-10] , output:[false]},
- ]
-
-nn.train(data, {
-  epoch: 10,
-  batch: 100,
-  learningRate: 0.001,
-  loss: 'mse',
-  shuffle: true,
-  callbacks: {
-    onEpochEnd: (epoch, err) => {
-      console.log(epoch, err);
-    }
-  }
+//train network
+nn.train(xor, {
+  epochs: 1500,
+  learningRate: 0.01,
+  optimizer: 'adam',
+  onEpochEnd : (epoch, logs) => console.log(epoch, logs),
+  onTrainEnd : () => predict()
 });
+
+//predict
+const predict = () => {
+  const res = nn.predict([[0,0],[1,1],[0,1],[1,0]], {
+    precision: 3,
+    round: true
+  });
+
+  console.log(res)
+  //[0, 0, 1, 1]
+};
 
 
 ```
