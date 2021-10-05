@@ -77,6 +77,7 @@ class simpleML {
         for(let i =0; i<neurons; ++i){
             this.createNeuron(`${name}_neuron${i}`,{inputs, layer:name, weights},true);
         }
+        return this;
     }
 
     getNetwork = _ => this.layers;
