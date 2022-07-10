@@ -21,15 +21,15 @@
 
   ////////////////////////////////////////////////////////////////
 
-const nn = new simpleML();
+const nn = new simpleML.sequential();
 
 nn.input(2)
   .layer(2, 'sigmoid')
   .layer(1, 'sigmoid')
 
 nn.train(xor, {
-  epochs: 1500,
-  learningRate: 0.01,
+  epochs: 100,
+  learningRate: 0.1,
   optimizer: 'adam',
   onEpochEnd : (epoch, logs) => console.log(epoch, logs),
   onTrainEnd : () => predict()

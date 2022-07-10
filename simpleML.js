@@ -12,24 +12,33 @@ class simpleML {
         nesterov : (lr) => tf.train.nesterov(lr),
     }
 
-    constructor() {
-        this.model = tf.sequential();
-        this.layer1 = false;
-    }
+    constructor() {}
 
-    input(input) {
-        this.inputs = input;
+}
+
+simpleML.sequential = class sequential extends simpleML{
+    constructor() {
+        super();
+        this.model = tf.sequential();
+    }
+    input(nodes) {
+        this.inputNodes = nodes;
         return this;
     }
-
+    #getInputNodes(){
+        if(this.inputNodes){
+            const nodes = this.inputNodes;
+            this.inputNodes = undefined;
+            return nodes;
+        }
+    }
     layer(nodes, activation = 'sigmoid') {
-
         this.model.add(tf.layers.dense({
-            inputShape: !this.layer1 ? [(typeof this.inputs == 'number' ) ? this.inputs : nodes] : undefined,
+            inputShape: this.#getInputNodes(),
+            units: nodes,
             activation,
             units: nodes,
           }));
-        this.layer1 = true;
         return this;
     }
 
@@ -78,5 +87,4 @@ class simpleML {
     tensors(){
         return tf.memory().numTensors;
     }
-  
 }

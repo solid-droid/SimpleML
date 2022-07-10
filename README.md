@@ -18,9 +18,9 @@ HTML
 Javascript
 ```Javascript
 
-const nn = new simpleML();
+const nn = new simpleML.sequential();
 
-//create network
+//create inbuilt sequential network
 nn.input(2)
   .layer(2, 'sigmoid')
   .layer(1, 'sigmoid')
@@ -33,7 +33,7 @@ const xor = [
     { input:[1,1], output:[0]  },  
 ]
 
-//train network
+//inbuilt train method using backpropagation
 nn.train(xor, {
   epochs: 1500,
   learningRate: 0.01,
