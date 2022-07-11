@@ -18,7 +18,7 @@ HTML
 Javascript
 ```Javascript
 
-const nn = new simpleML.sequential();
+const nn = new simpleML.network();
 
 //create inbuilt sequential network
 nn.input(2)
@@ -33,7 +33,7 @@ const xor = [
     { input:[1,1], output:[0]  },  
 ]
 
-//inbuilt train method using backpropagation
+//inbuilt compile and fit method using backpropagation
 nn.train(xor, {
   epochs: 1500,
   learningRate: 0.01,
