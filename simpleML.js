@@ -41,10 +41,9 @@ class simpleML {
                  let tensor = weight.clone();
                  let shape = tensor.shape;
                  let values = tensor.dataSync().slice();
-                 for(let i = 0; i < values.length; i++){
-                    if(Math.random() < mutationRate){
-                         values[i] = values[i] + (Math.random() - 0.5) * 0.1;
-                    }
+                 const mutationPoint = Math.floor(mutationRate * values.length);
+                 for(let i = 0; i < Math.min(mutationPoint, values.length); i++){
+                         values[i] = values[i] + Math.random();
                  }
                  mutatedWeights.push(tf.tensor(values, shape));
              });
@@ -53,28 +52,44 @@ class simpleML {
          })
      }
 
-     crossover(networks){
+     crossover(networks, rate = 0.5){
         return tf.tidy(()=>{
+            const memorizeCrossoverPoints = {};
+            const getCrossoverPoint = (length) => {
+                if(memorizeCrossoverPoints[length]){
+                    return memorizeCrossoverPoints[length];
+                }
+                memorizeCrossoverPoints[length] = Math.min(Math.floor(length * rate),length);
+                memorizeCrossoverPoints[length] ||= 1;
+                return memorizeCrossoverPoints[length];
+            }
             const _networks = networks.slice();
             const mutatedWeights = [];
             const shapeList = [];
-            _networks.forEach(parent => {
-                const model = parent.network.model;
-                const fitness = parent.fitness;
+            _networks.sort((a, b) => a.fitness - b.fitness);
+            const offsprings = _networks.slice(0, 2);
+            offsprings.forEach((child,pIndex) => {
+                const model = child.network.model;
                 const weights = model.getWeights();
                 weights.forEach((layer,k) => {
                         let tensor = layer.clone();
                         shapeList[k] ??= tensor.shape;
                         let values = tensor.dataSync().slice();
+                        const crossOverpoint = getCrossoverPoint(values.length);
                         for(let i = 0; i < values.length; i++){
-                            values[i] = values[i] * fitness;
-                            mutatedWeights[k] ??= [];
-                            mutatedWeights[k][i] ??= 0;
-                            mutatedWeights[k][i] += values[i];
+                            mutatedWeights[pIndex] ??= [];
+                            mutatedWeights[1-pIndex] ??= [];
+                            mutatedWeights[pIndex][k] ??= [];
+                            mutatedWeights[1-pIndex][k] ??= [];
+                            mutatedWeights[pIndex][k][i] = values[i];
+                            if(i >= crossOverpoint){
+                                const _val = offsprings[1-pIndex].network.model.getWeights()[k].dataSync().slice();
+                                mutatedWeights[pIndex][k][i] = _val[i];
+                            }
                         }
                 });
             });
-            return mutatedWeights.map((layerWeights,k) =>tf.tensor(layerWeights, shapeList[k]));
+            return mutatedWeights.map(child => child.map((layerWeights,k) =>tf.tensor(layerWeights, shapeList[k])));
         });
      }
 
@@ -190,13 +205,13 @@ simpleML.evolutionaryBrain = class evolutionaryBrain extends simpleML.network {
         }
     }
 
-    createGeneration(childCount = this.childCount, options = {}){
+    createGeneration(childCount = this.childCount, options = {}, offsprings = []){
         this.childCount = childCount || this.childCount;
         this.mutateRate = options.mutateRate || this.mutateRate;
         this.randomWeights = options.randomWeights || this.randomWeights;
         this.generations.push({
             generationId: ++this.generationCount,
-            children: this.createChildren(this.childCount),
+            children: this.createChildren(this.childCount, offsprings),
             mutateRate: this.mutateRate,
             childCount: this.childCount,
             disposed:false
@@ -204,9 +219,9 @@ simpleML.evolutionaryBrain = class evolutionaryBrain extends simpleML.network {
         return this;
     }
 
-    createChildren(count) {
+    createChildren(count, appendList = []) {
             const children = [];
-            for(let i = 0; i < count; i++){
+            for(let i = 0; i < count - appendList.length; i++){
                 children.push({
                     network:this.cloneNetwork(this.network , this.randomWeights),
                     output:[],
@@ -215,6 +230,13 @@ simpleML.evolutionaryBrain = class evolutionaryBrain extends simpleML.network {
                     score:0,
                 });
             }
+            appendList.forEach((child,i) => children.push({
+                network:child,
+                output:[],
+                id:count - appendList.length +i,
+                fitness:0,
+                score:0,
+            }));
             if(this.randomWeights) this.randomWeights = false;
             return children;
     }
@@ -270,14 +292,22 @@ simpleML.evolutionaryBrain = class evolutionaryBrain extends simpleML.network {
         return this.network.predict(input , options);
     }
 
-    evolve() {
+    evolve(rate = 0.5) {
         tf.tidy(()=>{
             const children = this.generations[this.generations.length - 1]?.children;
             if(children){
-               const childWeights = super.crossover(children);
-               this.network.model.setWeights(childWeights);
+               const offsprings = super.crossover(children, rate);
+               this.network.model.setWeights(offsprings[0]);
+               const child1 = this.cloneNetwork(this.network);
+               const child2 = this.cloneNetwork(this.network);
+               child2.model.setWeights(offsprings[1]);
+               this.createGeneration(
+                this.childCount, 
+                {}, 
+                [child1, child2]);
             }
         });
+        this.cleanup();
         return this;
     }
 
